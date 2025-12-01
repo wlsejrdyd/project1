@@ -101,7 +101,7 @@
         services:
           - name: "Nginx"
             status: "{{ nginx_status.stdout }}"
-            port: 80
+            port: 443
           - name: "Prometheus"
             status: "{{ prometheus_status.stdout }}"
             port: 9090
@@ -113,7 +113,7 @@
             port: 9100
           - name: "MariaDB"
             status: "{{ mariadb_status.stdout }}"
-            port: 3306
+            port: 9981
 
     - name: Display service status
       debug:
