@@ -6,9 +6,9 @@
 
 ## 🌐 Live Demo
 
-- **Dashboard**: https://project1.salm.kr
-- **Prometheus**: https://project1.salm.kr:9090
-- **Grafana**: https://project1.salm.kr:3000
+- **Dashboard**: https://project1.deok.kr
+- **Prometheus**: https://project1.deok.kr:9090
+- **Grafana**: https://project1.deok.kr:3000
 
 ---
 
@@ -96,7 +96,7 @@
 │   └── src/
 │       └── main/
 │           ├── java/
-│           │   └── kr/salm/project1/
+│           │   └── kr/deok/project1/
 │           │       ├── Application.java
 │           │       ├── controller/
 │           │       ├── service/
@@ -211,7 +211,7 @@ up{job="node"}
 ```nginx
 server {
     listen 80;
-    server_name project1.salm.kr;
+    server_name project1.deok.kr;
 
     location / {
         root /app/project1/frontend;
