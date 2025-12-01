@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infrastructure Dashboard | project1.deok.kr</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-secondary: #111827;
+      --bg-card: #1f2937;
+      --bg-card-hover: #374151;
+      --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.3);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text: #f9fafb;
+      --text-muted: #9ca3af;
+      --border: #374151;
+      --prometheus: #e6522c;
+      --grafana: #f46800;
+    }
+    
+    body {
+      font-family: 'Segoe UI', -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .logo-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.1rem;
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
+    
+    .logo-text {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+    
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--success);
+      border-radius: 20px;
+      font-size: 0.85rem;
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.1); }
+    }
+    
+    .external-links {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .ext-link {
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .ext-link.prometheus {
+      background: rgba(230, 82, 44, 0.15);
+      border: 1px solid var(--prometheus);
+      color: var(--prometheus);
+    }
+    
+    .ext-link.grafana {
+      background: rgba(244, 104, 0, 0.15);
+      border: 1px solid var(--grafana);
+      color: var(--grafana);
+    }
+    
+    .ext-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    .current-time {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+    
+    /* Main */
+    .main {
+      padding: 1.5rem;
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+    
+    /* Grid Layouts */
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 1.5rem; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
+    .grid-3-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
+    
+    /* Card */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: all 0.3s;
+    }
+    
+    .card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+    
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    
+    .card-title {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+    
+    /* Metric Card */
+    .metric-value {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    
+    .metric-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    
+    .progress-bar {
+      height: 6px;
+      background: var(--bg-secondary);
+      border-radius: 3px;
+      margin-top: 1rem;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.6s ease;
+    }
+    
+    /* Service Grid */
+    .service-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    
+    .service-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: 10px;
+      transition: background 0.2s;
+    }
+    
+    .service-item:hover { background: var(--bg-card-hover); }
+    
+    .service-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+    
+    .service-name { font-weight: 600; font-size: 0.9rem; }
+    .service-port { font-size: 0.75rem; color: var(--text-muted); }
+    
+    .service-status {
+      margin-left: auto;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    
+    .service-status.up { background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .service-status.down { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+    
+    /* Chart */
+    .chart-container {
+      position: relative;
+      height: 220px;
+    }
+    
+    /* Pipeline */
+    .pipeline-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .pipeline-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      border-left: 3px solid transparent;
+    }
+    
+    .pipeline-item.success { border-left-color: var(--success); }
+    .pipeline-item.failed { border-left-color: var(--danger); }
+    .pipeline-item.running { border-left-color: var(--warning); }
+    
+    .pipeline-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+    }
+    
+    .pipeline-icon.success { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .pipeline-icon.failed { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    .pipeline-icon.running { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+    
+    .pipeline-info { flex: 1; min-width: 0; }
+    .pipeline-name { font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pipeline-meta { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+    .pipeline-time { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
+    
+    /* Ansible Stats */
+    .ansible-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+    
+    .ansible-stat {
+      text-align: center;
+      padding: 12px 8px;
+      background: var(--bg-secondary);
+      border-radius: 10px;
+    }
+    
+    .ansible-value { font-size: 1.4rem; font-weight: 700; }
+    .ansible-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; }
+    
+    /* Log Console */
+    .log-console {
+      background: #0d1117;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'JetBrains Mono', 'Consolas', monospace;
+      font-size: 0.75rem;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    
+    .log-line { padding: 3px 0; display: flex; gap: 8px; }
+    .log-time { color: #6e7681; min-width: 70px; }
+    .log-ok { color: var(--success); }
+    .log-changed { color: var(--warning); }
+    .log-failed { color: var(--danger); }
+    .log-task { color: var(--text-muted); }
+    
+    /* Prometheus Query Section */
+    .prom-section {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    
+    .prom-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    
+    .prom-query {
+      background: #0d1117;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--prometheus);
+      word-break: break-all;
+    }
+    
+    /* Grafana Embed */
+    .grafana-frame {
+      width: 100%;
+      height: 250px;
+      border: none;
+      border-radius: 8px;
+      background: var(--bg-secondary);
+    }
+    
+    .grafana-placeholder {
+      width: 100%;
+      height: 250px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      gap: 8px;
+    }
+    
+    .grafana-placeholder-icon { font-size: 2.5rem; }
+    .grafana-placeholder-text { font-size: 0.85rem; }
+    
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+      margin-top: 1rem;
+    }
+    
+    .footer a { color: var(--accent); text-decoration: none; }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .grid-2, .grid-3-1 { grid-template-columns: 1fr; }
+      .service-grid { grid-template-columns: 1fr; }
+    }
+    
+    @media (max-width: 768px) {
+      .header { flex-direction: column; gap: 1rem; padding: 1rem; }
+      .header-right { flex-wrap: wrap; justify-content: center; }
+      .grid-4 { grid-template-columns: 1fr; }
+      .ansible-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">📊</div>
+      <span class="logo-text">Infrastructure Dashboard</span>
+    </div>
+    <div class="header-right">
+      <div class="external-links">
+        <a href="http://project1.deok.kr/prometheus" target="_blank" class="ext-link prometheus">
+          🔥 Prometheus
+        </a>
+        <a href="http://project1.deok.kr/grafana" target="_blank" class="ext-link grafana">
+          📈 Grafana
+        </a>
+      </div>
+      <div class="status-badge">
+        <span class="status-dot"></span>
+        <span id="systemStatus">All Systems Operational</span>
+      </div>
+      <div class="current-time" id="currentTime"></div>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- Metrics Row -->
+    <div class="grid-4">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">CPU Usage</span>
+          <div class="card-icon" style="background: rgba(59, 130, 246, 0.2); color: var(--accent);">💻</div>
+        </div>
+        <div class="metric-value" id="cpuValue">--</div>
+        <div class="metric-sub">node_cpu_seconds_total</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="cpuBar" style="width: 0%; background: linear-gradient(90deg, var(--accent), #8b5cf6);"></div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Memory Usage</span>
+          <div class="card-icon" style="background: rgba(16, 185, 129, 0.2); color: var(--success);">🧠</div>
+        </div>
+        <div class="metric-value" id="memValue">--</div>
+        <div class="metric-sub">node_memory_Active_bytes</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="memBar" style="width: 0%; background: linear-gradient(90deg, var(--success), #34d399);"></div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Disk Usage</span>
+          <div class="card-icon" style="background: rgba(245, 158, 11, 0.2); color: var(--warning);">💾</div>
+        </div>
+        <div class="metric-value" id="diskValue">--</div>
+        <div class="metric-sub">node_filesystem_avail_bytes</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="diskBar" style="width: 0%; background: linear-gradient(90deg, var(--warning), #fbbf24);"></div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Uptime</span>
+          <div class="card-icon" style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6;">⏱️</div>
+        </div>
+        <div class="metric-value" id="uptimeValue">--</div>
+        <div class="metric-sub">node_boot_time_seconds</div>
+      </div>
+    </div>
+
+    <!-- Services & Chart Row -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Service Status</span>
+        </div>
+        <div class="service-grid" id="serviceGrid">
+          <div class="service-item">
+            <div class="service-icon" style="background: rgba(16, 185, 129, 0.2); color: var(--success);">🌐</div>
+            <div>
+              <div class="service-name">Nginx</div>
+              <div class="service-port">:80 / :443</div>
+            </div>
+            <div class="service-status up" id="nginx-status"></div>
+          </div>
+          <div class="service-item">
+            <div class="service-icon" style="background: rgba(59, 130, 246, 0.2); color: var(--accent);">🗄️</div>
+            <div>
+              <div class="service-name">MariaDB</div>
+              <div class="service-port">:3306</div>
+            </div>
+            <div class="service-status up" id="mariadb-status"></div>
+          </div>
+          <div class="service-item">
+            <div class="service-icon" style="background: rgba(245, 158, 11, 0.2); color: var(--warning);">☕</div>
+            <div>
+              <div class="service-name">Spring Boot</div>
+              <div class="service-port">:8082</div>
+            </div>
+            <div class="service-status up" id="spring-status"></div>
+          </div>
+          <div class="service-item">
+            <div class="service-icon" style="background: rgba(230, 82, 44, 0.2); color: var(--prometheus);">🔥</div>
+            <div>
+              <div class="service-name">Prometheus</div>
+              <div class="service-port">:9090</div>
+            </div>
+            <div class="service-status up" id="prometheus-status"></div>
+          </div>
+          <div class="service-item">
+            <div class="service-icon" style="background: rgba(244, 104, 0, 0.2); color: var(--grafana);">📈</div>
+            <div>
+              <div class="service-name">Grafana</div>
+              <div class="service-port">:3000</div>
+            </div>
+            <div class="service-status up" id="grafana-status"></div>
+          </div>
+          <div class="service-item">
+            <div class="service-icon" style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6;">📡</div>
+            <div>
+              <div class="service-name">Node Exporter</div>
+              <div class="service-port">:9100</div>
+            </div>
+            <div class="service-status up" id="exporter-status"></div>
+          </div>
+        </div>
+        <div class="prom-section">
+          <div class="prom-label">Prometheus Query</div>
+          <div class="prom-query">up{job="node"}</div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">CPU Usage (1h)</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="cpuChart"></canvas>
+        </div>
+        <div class="prom-section">
+          <div class="prom-label">Prometheus Query</div>
+          <div class="prom-query">100 - (avg(irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CI/CD & Ansible Row -->
+    <div class="grid-3-1">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">CI/CD Pipeline (GitHub Actions)</span>
+        </div>
+        <div class="pipeline-list" id="pipelineList">
+          <div class="pipeline-item success">
+            <div class="pipeline-icon success">✓</div>
+            <div class="pipeline-info">
+              <div class="pipeline-name">deploy-production</div>
+              <div class="pipeline-meta">main • a1b2c3d • "Update dashboard UI"</div>
+            </div>
+            <div class="pipeline-time">2분 전</div>
+          </div>
+          <div class="pipeline-item success">
+            <div class="pipeline-icon success">✓</div>
+            <div class="pipeline-info">
+              <div class="pipeline-name">ansible-playbook</div>
+              <div class="pipeline-meta">main • e5f6g7h • "Configure monitoring"</div>
+            </div>
+            <div class="pipeline-time">18분 전</div>
+          </div>
+          <div class="pipeline-item failed">
+            <div class="pipeline-icon failed">✗</div>
+            <div class="pipeline-info">
+              <div class="pipeline-name">build-and-test</div>
+              <div class="pipeline-meta">feature/api • i9j0k1l • "Add health endpoint"</div>
+            </div>
+            <div class="pipeline-time">1시간 전</div>
+          </div>
+          <div class="pipeline-item success">
+            <div class="pipeline-icon success">✓</div>
+            <div class="pipeline-info">
+              <div class="pipeline-name">security-scan</div>
+              <div class="pipeline-meta">main • m3n4o5p • "Weekly security scan"</div>
+            </div>
+            <div class="pipeline-time">3시간 전</div>
+          </div>
+          <div class="pipeline-item success">
+            <div class="pipeline-icon success">✓</div>
+            <div class="pipeline-info">
+              <div class="pipeline-name">deploy-staging</div>
+              <div class="pipeline-meta">develop • q7r8s9t • "Test new features"</div>
+            </div>
+            <div class="pipeline-time">5시간 전</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Ansible Execution</span>
+        </div>
+        <div class="ansible-grid">
+          <div class="ansible-stat">
+            <div class="ansible-value" style="color: var(--success);" id="ansibleOk">47</div>
+            <div class="ansible-label">OK</div>
+          </div>
+          <div class="ansible-stat">
+            <div class="ansible-value" style="color: var(--warning);" id="ansibleChanged">12</div>
+            <div class="ansible-label">Changed</div>
+          </div>
+          <div class="ansible-stat">
+            <div class="ansible-value" style="color: var(--danger);" id="ansibleFailed">2</div>
+            <div class="ansible-label">Failed</div>
+          </div>
+          <div class="ansible-stat">
+            <div class="ansible-value" style="color: var(--text-muted);" id="ansibleSkipped">3</div>
+            <div class="ansible-label">Skipped</div>
+          </div>
+        </div>
+        <div class="log-console" id="ansibleLog">
+          <div class="log-line"><span class="log-time">[14:32:15]</span> <span class="log-ok">ok</span> <span class="log-task">Gather facts</span></div>
+          <div class="log-line"><span class="log-time">[14:32:18]</span> <span class="log-changed">changed</span> <span class="log-task">Install packages</span></div>
+          <div class="log-line"><span class="log-time">[14:32:25]</span> <span class="log-ok">ok</span> <span class="log-task">Configure nginx</span></div>
+          <div class="log-line"><span class="log-time">[14:32:28]</span> <span class="log-ok">ok</span> <span class="log-task">Start services</span></div>
+          <div class="log-line"><span class="log-time">[14:32:30]</span> <span class="log-failed">failed</span> <span class="log-task">Restart app</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grafana Embed Row -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Grafana Dashboard (Embedded)</span>
+        <a href="http://project1.deok.kr/grafana" target="_blank" class="ext-link grafana" style="padding: 6px 12px; font-size: 0.75rem;">
+          Open Grafana →
+        </a>
+      </div>
+      <div class="grafana-placeholder" id="grafanaEmbed">
+        <div class="grafana-placeholder-icon">📈</div>
+        <div class="grafana-placeholder-text">Grafana Panel will be embedded here</div>
+        <div style="font-size: 0.7rem; color: var(--text-muted);">Configure iframe src in Grafana settings</div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>Infrastructure Dashboard v1.0 | <a href="https://github.com/your-repo/project1" target="_blank">GitHub Repository</a></p>
+    <p style="margin-top: 4px;">Powered by Prometheus, Grafana, Ansible, GitHub Actions</p>
+  </footer>
+
+  <script>
+    // Config
+    const CONFIG = {
+      prometheusUrl: 'http://project1.deok.kr/prometheus',
+      apiUrl: 'http://project1.deok.kr/api',
+      refreshInterval: 5000
+    };
+
+    // Update Time
+    function updateTime() {
+      const now = new Date();
+      document.getElementById('currentTime').textContent = now.toLocaleString('ko-KR', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      });
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // Fetch Prometheus Metrics
+    async function fetchPrometheusMetric(query) {
+      try {
+        const res = await fetch(`${CONFIG.prometheusUrl}/api/v1/query?query=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        if (data.status === 'success' && data.data.result.length > 0) {
+          return parseFloat(data.data.result[0].value[1]);
+        }
+      } catch (e) {
+        console.log('Prometheus fetch error:', e);
+      }
+      return null;
+    }
+
+    // Update Metrics from Prometheus
+    async function updateMetrics() {
+      // CPU Usage
+      const cpu = await fetchPrometheusMetric('100 - (avg(irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)');
+      if (cpu !== null) {
+        document.getElementById('cpuValue').textContent = cpu.toFixed(1) + '%';
+        document.getElementById('cpuBar').style.width = cpu + '%';
+      }
+
+      // Memory Usage
+      const memTotal = await fetchPrometheusMetric('node_memory_MemTotal_bytes');
+      const memAvail = await fetchPrometheusMetric('node_memory_MemAvailable_bytes');
+      if (memTotal && memAvail) {
+        const memUsed = ((memTotal - memAvail) / memTotal * 100);
+        document.getElementById('memValue').textContent = memUsed.toFixed(1) + '%';
+        document.getElementById('memBar').style.width = memUsed + '%';
+      }
+
+      // Disk Usage
+      const diskTotal = await fetchPrometheusMetric('node_filesystem_size_bytes{mountpoint="/"}');
+      const diskAvail = await fetchPrometheusMetric('node_filesystem_avail_bytes{mountpoint="/"}');
+      if (diskTotal && diskAvail) {
+        const diskUsed = ((diskTotal - diskAvail) / diskTotal * 100);
+        document.getElementById('diskValue').textContent = diskUsed.toFixed(1) + '%';
+        document.getElementById('diskBar').style.width = diskUsed + '%';
+      }
+
+      // Uptime
+      const bootTime = await fetchPrometheusMetric('node_boot_time_seconds');
+      if (bootTime) {
+        const uptimeSec = Date.now() / 1000 - bootTime;
+        const days = Math.floor(uptimeSec / 86400);
+        const hours = Math.floor((uptimeSec % 86400) / 3600);
+        document.getElementById('uptimeValue').textContent = `${days}d ${hours}h`;
+      }
+    }
+
+    // Fallback: Simulated metrics if Prometheus unavailable
+    function simulateMetrics() {
+      const cpu = 35 + Math.random() * 30;
+      const mem = 55 + Math.random() * 25;
+      const disk = 40 + Math.random() * 20;
+      
+      document.getElementById('cpuValue').textContent = cpu.toFixed(1) + '%';
+      document.getElementById('cpuBar').style.width = cpu + '%';
+      document.getElementById('memValue').textContent = mem.toFixed(1) + '%';
+      document.getElementById('memBar').style.width = mem + '%';
+      document.getElementById('diskValue').textContent = disk.toFixed(1) + '%';
+      document.getElementById('diskBar').style.width = disk + '%';
+      document.getElementById('uptimeValue').textContent = '15d 7h';
+    }
+
+    // Initialize metrics
+    async function initMetrics() {
+      const testMetric = await fetchPrometheusMetric('up');
+      if (testMetric !== null) {
+        updateMetrics();
+        setInterval(updateMetrics, CONFIG.refreshInterval);
+      } else {
+        console.log('Prometheus unavailable, using simulated data');
+        simulateMetrics();
+        setInterval(simulateMetrics, CONFIG.refreshInterval);
+      }
+    }
+
+    // CPU Chart
+    const ctx = document.getElementById('cpuChart').getContext('2d');
+    const cpuHistory = Array.from({length: 12}, () => Math.floor(30 + Math.random() * 40));
+    const labels = Array.from({length: 12}, (_, i) => `-${(11-i)*5}m`);
+    
+    const cpuChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'CPU %',
+          data: cpuHistory,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af', font: { size: 10 } } },
+          y: { min: 0, max: 100, grid: { color: '#1f2937' }, ticks: { color: '#9ca3af', font: { size: 10 } } }
+        },
+        interaction: { intersect: false, mode: 'index' }
+      }
+    });
+
+    // Update chart periodically
+    setInterval(() => {
+      cpuHistory.shift();
+      cpuHistory.push(Math.floor(30 + Math.random() * 40));
+      cpuChart.update('none');
+    }, 10000);
+
+    // Init
+    initMetrics();
+  </script>
+</body>
+</html>
