@@ -65,11 +65,6 @@
 - **Grafana**: 시각화 대시보드
 - **Node Exporter**: 시스템 메트릭 수집
 
-### Backend
-- **Java 17**
-- **Spring Boot 3.x**
-- **Spring Data JPA**
-
 ### Frontend
 - **HTML5 / CSS3 / Vanilla JavaScript**
 - **Chart.js**: 실시간 차트
