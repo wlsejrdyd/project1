@@ -7,7 +7,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
+
     :root {
       --bg-primary: #0a0e17;
       --bg-secondary: #111827;
@@ -23,15 +23,16 @@
       --border: #374151;
       --prometheus: #e6522c;
       --grafana: #f46800;
+      --kubernetes: #326ce5;
     }
-    
+
     body {
       font-family: 'Segoe UI', -apple-system, sans-serif;
       background: var(--bg-primary);
       color: var(--text);
       min-height: 100vh;
     }
-    
+
     .header {
       background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
       border-bottom: 1px solid var(--border);
@@ -43,9 +44,9 @@
       top: 0;
       z-index: 100;
     }
-    
+
     .logo { display: flex; align-items: center; gap: 12px; }
-    
+
     .logo-icon {
       width: 42px; height: 42px;
       background: linear-gradient(135deg, var(--accent), #8b5cf6);
@@ -54,24 +55,24 @@
       font-size: 1.1rem;
       box-shadow: 0 4px 15px var(--accent-glow);
     }
-    
+
     .logo-text { font-size: 1.3rem; font-weight: 700; }
-    
+
     .header-right { display: flex; align-items: center; gap: 1rem; }
-    
+
     .external-links { display: flex; gap: 8px; }
-    
+
     .ext-link {
       padding: 8px 14px; border-radius: 8px;
       font-size: 0.8rem; font-weight: 600;
       text-decoration: none; transition: all 0.2s;
       display: flex; align-items: center; gap: 6px;
     }
-    
+
     .ext-link.prometheus { background: rgba(230, 82, 44, 0.15); border: 1px solid var(--prometheus); color: var(--prometheus); }
     .ext-link.grafana { background: rgba(244, 104, 0, 0.15); border: 1px solid var(--grafana); color: var(--grafana); }
     .ext-link:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-    
+
     .status-badge {
       display: flex; align-items: center; gap: 8px;
       padding: 8px 16px;
@@ -79,127 +80,139 @@
       border: 1px solid var(--success);
       border-radius: 20px; font-size: 0.85rem;
     }
-    
+
     .status-dot {
       width: 8px; height: 8px;
       background: var(--success);
       border-radius: 50%;
       animation: pulse 2s infinite;
     }
-    
+
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    
+
     .current-time { color: var(--text-muted); font-size: 0.85rem; }
-    
+
     .main { padding: 1.5rem; max-width: 1800px; margin: 0 auto; }
-    
+
     .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 1.5rem; }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
     .grid-3-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
-    
+
     .card {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 16px; padding: 1.5rem;
       transition: all 0.3s;
     }
-    
+
     .card:hover { border-color: var(--accent); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
-    
+    .card.k8s:hover { border-color: var(--kubernetes); }
+
     .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-    
+
     .card-title {
       font-size: 0.85rem; color: var(--text-muted);
       font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;
     }
-    
+
+    .card-title.k8s { color: var(--kubernetes); }
+
     .card-icon {
       width: 36px; height: 36px; border-radius: 10px;
       display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
     }
-    
+
     .metric-value { font-size: 2.2rem; font-weight: 700; margin-bottom: 0.25rem; }
     .metric-sub { font-size: 0.8rem; color: var(--text-muted); }
-    
+
     .progress-bar { height: 6px; background: var(--bg-secondary); border-radius: 3px; margin-top: 1rem; overflow: hidden; }
     .progress-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
-    
+
     .service-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    
+
     .service-item {
       display: flex; align-items: center; gap: 10px;
       padding: 12px; background: var(--bg-secondary);
       border-radius: 10px; transition: background 0.2s;
     }
-    
+
     .service-item:hover { background: var(--bg-card-hover); }
-    
+
     .service-icon {
       width: 36px; height: 36px; border-radius: 8px;
       display: flex; align-items: center; justify-content: center; font-size: 1rem;
     }
-    
+
     .service-name { font-weight: 600; font-size: 0.9rem; }
     .service-port { font-size: 0.75rem; color: var(--text-muted); }
-    
+
     .service-status { margin-left: auto; width: 10px; height: 10px; border-radius: 50%; }
     .service-status.up { background: var(--success); box-shadow: 0 0 8px var(--success); }
     .service-status.down { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
     .service-status.unknown { background: var(--text-muted); }
-    
+
     .chart-container { position: relative; height: 220px; }
-    
+
     .pipeline-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
-    
+
     .pipeline-item {
       display: flex; align-items: center; gap: 12px;
       padding: 10px 12px; background: var(--bg-secondary);
       border-radius: 8px; border-left: 3px solid transparent;
     }
-    
+
     .pipeline-item.success { border-left-color: var(--success); }
     .pipeline-item.failure { border-left-color: var(--danger); }
     .pipeline-item.pending { border-left-color: var(--warning); }
-    
+
     .pipeline-icon {
       width: 26px; height: 26px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center; font-size: 0.75rem;
     }
-    
+
     .pipeline-icon.success { background: rgba(16, 185, 129, 0.2); color: var(--success); }
     .pipeline-icon.failure { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
     .pipeline-icon.pending { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
-    
+
     .pipeline-info { flex: 1; min-width: 0; }
     .pipeline-name { font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .pipeline-meta { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
     .pipeline-time { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
-    
+
     .ansible-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1rem; }
-    
+
     .ansible-stat { text-align: center; padding: 12px 8px; background: var(--bg-secondary); border-radius: 10px; }
     .ansible-value { font-size: 1.4rem; font-weight: 700; }
     .ansible-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; }
-    
+
     .log-console {
       background: #0d1117; border-radius: 8px; padding: 12px;
       font-family: 'JetBrains Mono', 'Consolas', monospace;
       font-size: 0.75rem; max-height: 180px; overflow-y: auto;
     }
-    
+
     .log-line { padding: 3px 0; display: flex; gap: 8px; }
     .log-time { color: #6e7681; min-width: 70px; }
     .log-ok { color: var(--success); }
     .log-changed { color: var(--warning); }
     .log-failed { color: var(--danger); }
     .log-task { color: var(--text-muted); }
-    
+
     .loading { color: var(--text-muted); font-style: italic; }
-    
+
+    .section-title {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 1rem; padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title span { font-size: 1.1rem; font-weight: 600; }
+    .section-title.k8s span { color: var(--kubernetes); }
+
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: var(--bg-secondary); }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-    
+
     @media (max-width: 1200px) {
       .grid-4 { grid-template-columns: repeat(2, 1fr); }
       .grid-2, .grid-3-1 { grid-template-columns: 1fr; }
@@ -240,7 +253,7 @@
           <div class="progress-fill" id="cpuBar" style="width: 0%; background: linear-gradient(90deg, var(--accent), #8b5cf6);"></div>
         </div>
       </div>
-      
+
       <div class="card">
         <div class="card-header">
           <span class="card-title">Memory Usage</span>
@@ -252,7 +265,7 @@
           <div class="progress-fill" id="memBar" style="width: 0%; background: linear-gradient(90deg, var(--success), #34d399);"></div>
         </div>
       </div>
-      
+
       <div class="card">
         <div class="card-header">
           <span class="card-title">Disk Usage</span>
@@ -264,7 +277,7 @@
           <div class="progress-fill" id="diskBar" style="width: 0%; background: linear-gradient(90deg, var(--warning), #fbbf24);"></div>
         </div>
       </div>
-      
+
       <div class="card">
         <div class="card-header">
           <span class="card-title">Uptime</span>
@@ -286,13 +299,59 @@
           <!-- 동적으로 생성됨 -->
         </div>
       </div>
-      
+
       <div class="card">
         <div class="card-header">
           <span class="card-title">CPU Usage (1h)</span>
         </div>
         <div class="chart-container">
           <canvas id="cpuChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kubernetes Row -->
+    <div class="section-title k8s">
+      <span>☸️ Kubernetes Cluster</span>
+    </div>
+    <div class="grid-2">
+      <div class="card k8s">
+        <div class="card-header">
+          <span class="card-title k8s">Pods Status</span>
+          <span class="card-title" id="k8sUpdateTime" style="font-size: 0.7rem;"></span>
+        </div>
+        <div class="pipeline-list" id="podList" style="max-height: 280px;">
+          <div class="loading">Loading Kubernetes Pods...</div>
+        </div>
+      </div>
+
+      <div class="card k8s">
+        <div class="card-header">
+          <span class="card-title k8s">Cluster Overview</span>
+        </div>
+        <div class="ansible-grid">
+          <div class="ansible-stat">
+            <div class="ansible-value" style="color: var(--success);" id="k8sRunning">-</div>
+            <div class="ansible-label">Running</div>
+          </div>
+          <div class="ansible-stat">
+            <div class="ansible-value" style="color: var(--warning);" id="k8sPending">-</div>
+            <div class="ansible-label">Pending</div>
+          </div>
+          <div class="ansible-stat">
+            <div class="ansible-value" style="color: var(--danger);" id="k8sFailed">-</div>
+            <div class="ansible-label">Failed</div>
+          </div>
+          <div class="ansible-stat">
+            <div class="ansible-value" style="color: var(--kubernetes);" id="k8sTotal">-</div>
+            <div class="ansible-label">Total Pods</div>
+          </div>
+        </div>
+        <div class="card-header" style="margin-top: 1rem;">
+          <span class="card-title k8s">Nodes</span>
+        </div>
+        <div class="service-grid" id="k8sNodes">
+          <div class="loading">Loading nodes...</div>
         </div>
       </div>
     </div>
@@ -308,7 +367,7 @@
           <div class="loading">Loading GitHub Actions...</div>
         </div>
       </div>
-      
+
       <div class="card">
         <div class="card-header">
           <span class="card-title">Ansible Execution</span>
@@ -360,6 +419,7 @@
       { name: 'Grafana', port: 3000, icon: '📈', color: 'var(--grafana)', job: null, checkUrl: '/grafana/api/health' },
       { name: 'Node Exporter', port: 9100, icon: '📡', color: '#8b5cf6', job: 'node' },
       { name: 'MariaDB', port: 9981, icon: '🗄️', color: 'var(--accent)', job: null },
+      { name: 'Kube State Metrics', port: 30047, icon: '☸️', color: 'var(--kubernetes)', job: 'kube-state-metrics' },
     ];
 
     // ============================================
@@ -435,7 +495,7 @@
     // ============================================
     async function updateServiceStatus() {
       const serviceGrid = document.getElementById('serviceGrid');
-      
+
       // Prometheus up 메트릭 조회
       let upStatus = {};
       try {
@@ -453,7 +513,7 @@
       // 서비스 그리드 렌더링
       serviceGrid.innerHTML = SERVICES.map(svc => {
         let status = 'unknown';
-        
+
         if (svc.job && upStatus[svc.job] !== undefined) {
           status = upStatus[svc.job] ? 'up' : 'down';
         } else if (svc.job === null) {
@@ -476,8 +536,96 @@
       // 전체 상태 업데이트
       const allUp = Object.values(upStatus).every(v => v);
       document.getElementById('systemStatus').textContent = allUp ? 'All Systems Operational' : 'Some Issues Detected';
-      
+
       document.getElementById('serviceUpdateTime').textContent = 'Updated: ' + new Date().toLocaleTimeString('ko-KR');
+    }
+
+    // ============================================
+    // Kubernetes 메트릭 조회
+    // ============================================
+    async function updateKubernetes() {
+      const podList = document.getElementById('podList');
+      
+      try {
+        // Pod 상태 조회
+        const podRes = await fetch(`${CONFIG.prometheusUrl}/api/v1/query?query=kube_pod_status_phase`);
+        const podData = await podRes.json();
+        
+        let pods = {};
+        let stats = { Running: 0, Pending: 0, Failed: 0, Succeeded: 0, Unknown: 0 };
+        
+        if (podData.status === 'success') {
+          podData.data.result.forEach(r => {
+            const podName = r.metric.pod;
+            const namespace = r.metric.namespace;
+            const phase = r.metric.phase;
+            const value = r.value[1];
+            
+            if (value === '1') {
+              pods[`${namespace}/${podName}`] = { name: podName, namespace, phase };
+              stats[phase] = (stats[phase] || 0) + 1;
+            }
+          });
+        }
+        
+        // Pod 목록 렌더링
+        const podEntries = Object.values(pods);
+        if (podEntries.length > 0) {
+          podList.innerHTML = podEntries.map(pod => {
+            const statusClass = pod.phase === 'Running' ? 'success' : 
+                               (pod.phase === 'Pending' ? 'pending' : 'failure');
+            const statusIcon = pod.phase === 'Running' ? '✓' : 
+                              (pod.phase === 'Pending' ? '⏳' : '✗');
+            return `
+              <div class="pipeline-item ${statusClass}">
+                <div class="pipeline-icon ${statusClass}">${statusIcon}</div>
+                <div class="pipeline-info">
+                  <div class="pipeline-name">${pod.name}</div>
+                  <div class="pipeline-meta">${pod.namespace}</div>
+                </div>
+                <div class="pipeline-time">${pod.phase}</div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          podList.innerHTML = '<div class="loading">No pods found</div>';
+        }
+        
+        // 통계 업데이트
+        document.getElementById('k8sRunning').textContent = stats.Running;
+        document.getElementById('k8sPending').textContent = stats.Pending;
+        document.getElementById('k8sFailed').textContent = stats.Failed + stats.Unknown;
+        document.getElementById('k8sTotal').textContent = podEntries.length;
+        
+        // 노드 상태 조회
+        const nodeRes = await fetch(`${CONFIG.prometheusUrl}/api/v1/query?query=kube_node_status_condition{condition="Ready",status="true"}`);
+        const nodeData = await nodeRes.json();
+        
+        const k8sNodes = document.getElementById('k8sNodes');
+        if (nodeData.status === 'success' && nodeData.data.result.length > 0) {
+          k8sNodes.innerHTML = nodeData.data.result.map(r => {
+            const nodeName = r.metric.node;
+            const isReady = r.value[1] === '1';
+            return `
+              <div class="service-item">
+                <div class="service-icon" style="background: rgba(50, 108, 229, 0.2); color: var(--kubernetes);">🖥️</div>
+                <div>
+                  <div class="service-name">${nodeName}</div>
+                  <div class="service-port">Node</div>
+                </div>
+                <div class="service-status ${isReady ? 'up' : 'down'}"></div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          k8sNodes.innerHTML = '<div class="loading">No nodes found</div>';
+        }
+        
+        document.getElementById('k8sUpdateTime').textContent = 'Updated: ' + new Date().toLocaleTimeString('ko-KR');
+      } catch (e) {
+        console.error('Failed to fetch Kubernetes metrics:', e);
+        podList.innerHTML = '<div class="loading">Failed to load Kubernetes data</div>';
+      }
     }
 
     // ============================================
@@ -485,18 +633,18 @@
     // ============================================
     async function updatePipeline() {
       const pipelineList = document.getElementById('pipelineList');
-      
+
       try {
         const res = await fetch(`https://api.github.com/repos/${CONFIG.githubOwner}/${CONFIG.githubRepo}/actions/runs?per_page=10`);
         const data = await res.json();
-        
+
         if (data.workflow_runs && data.workflow_runs.length > 0) {
           pipelineList.innerHTML = data.workflow_runs.map(run => {
             const status = run.conclusion || run.status;
             const statusClass = status === 'success' ? 'success' : (status === 'failure' ? 'failure' : 'pending');
             const statusIcon = status === 'success' ? '✓' : (status === 'failure' ? '✗' : '⏳');
             const timeAgo = getTimeAgo(new Date(run.created_at));
-            
+
             return `
               <div class="pipeline-item ${statusClass}">
                 <div class="pipeline-icon ${statusClass}">${statusIcon}</div>
@@ -515,7 +663,7 @@
         console.error('Failed to fetch GitHub Actions:', e);
         pipelineList.innerHTML = '<div class="loading">Failed to load GitHub Actions</div>';
       }
-      
+
       document.getElementById('pipelineUpdateTime').textContent = 'Updated: ' + new Date().toLocaleTimeString('ko-KR');
     }
 
@@ -527,43 +675,43 @@
         // reports 디렉토리에서 최신 JSON 파일 조회
         const res = await fetch(`${CONFIG.reportsUrl}/`);
         const html = await res.text();
-        
+
         // HTML에서 JSON 파일 목록 파싱
         const jsonFiles = [...html.matchAll(/href="(report_[^"]+\.json)"/g)]
           .map(m => m[1])
           .sort()
           .reverse();
-        
+
         if (jsonFiles.length > 0) {
           const latestReport = await fetch(`${CONFIG.reportsUrl}/${jsonFiles[0]}`).then(r => r.json());
-          
+
           // 서비스 & 포트 상태로 통계 계산
           let okCount = 0, failedCount = 0;
-          
+
           if (latestReport.services) {
             latestReport.services.forEach(svc => {
               if (svc.status === 'active') okCount++;
               else failedCount++;
             });
           }
-          
+
           if (latestReport.ports) {
             latestReport.ports.forEach(port => {
               if (port.reachable) okCount++;
               else failedCount++;
             });
           }
-          
+
           // Summary 업데이트
           document.getElementById('ansibleOk').textContent = okCount;
           document.getElementById('ansibleChanged').textContent = 0;
           document.getElementById('ansibleFailed').textContent = failedCount;
           document.getElementById('ansibleSkipped').textContent = 0;
-          
+
           // 로그 업데이트 (서비스 + 포트)
           const logConsole = document.getElementById('ansibleLog');
           let logHtml = '';
-          
+
           if (latestReport.services) {
             logHtml += latestReport.services.map(svc => {
               const isOk = svc.status === 'active';
@@ -576,7 +724,7 @@
               `;
             }).join('');
           }
-          
+
           if (latestReport.ports) {
             logHtml += latestReport.ports.map(port => {
               const isOk = port.reachable;
@@ -589,7 +737,7 @@
               `;
             }).join('');
           }
-          
+
           logConsole.innerHTML = logHtml;
           document.getElementById('ansibleUpdateTime').textContent = 'Report: ' + jsonFiles[0].replace('report_', '').replace('.json', '');
         } else {
@@ -621,7 +769,7 @@
     const ctx = document.getElementById('cpuChart').getContext('2d');
     const cpuHistory = Array(12).fill(0);
     const labels = Array.from({length: 12}, (_, i) => `-${(11-i)*5}m`);
-    
+
     const cpuChart = new Chart(ctx, {
       type: 'line',
       data: {
@@ -665,13 +813,15 @@
     async function init() {
       await updateMetrics();
       await updateServiceStatus();
+      await updateKubernetes();
       await updatePipeline();
       await updateAnsibleReport();
       await updateCpuChart();
-      
+
       // 주기적 업데이트
       setInterval(updateMetrics, CONFIG.refreshInterval);
       setInterval(updateServiceStatus, CONFIG.refreshInterval);
+      setInterval(updateKubernetes, CONFIG.refreshInterval);
       setInterval(updatePipeline, 60000); // 1분마다
       setInterval(updateAnsibleReport, 60000); // 1분마다
       setInterval(updateCpuChart, 30000); // 30초마다
