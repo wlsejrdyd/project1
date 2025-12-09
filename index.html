@@ -652,7 +652,7 @@
       const allRuns = [];
       for (const repoConfig of CONFIG.githubRepos) {
         try {
-          const res = await fetch(`https://api.github.com/repos/${CONFIG.githubOwner}/${repoConfig.repo}/actions/runs?per_page=10`);
+          const res = await fetch(url, { headers: { 'Authorization': `token ${CONFIG.githubToken}` } });
           const data = await res.json();
           if (data.workflow_runs) {
             data.workflow_runs.forEach(run => { allRuns.push({ ...run, _repo: repoConfig.repo, _label: repoConfig.label, _color: repoConfig.color, _icon: repoConfig.icon }); });
