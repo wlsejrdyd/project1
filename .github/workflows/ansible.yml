@@ -1,7 +1,7 @@
 # .github/workflows/ansible.yml
 # Ansible 플레이북 원격 실행
 
-name: Ansible
+name: Infra Monitoring Project Ansible (STATE)
 
 on:
   workflow_dispatch:  # 수동 실행만
@@ -23,7 +23,7 @@ on:
         type: string
 
 env:
-  ANSIBLE_PATH: /app/project1/ansible
+  ANSIBLE_PATH: /app/infra/ansible
 
 jobs:
   # ============================================
@@ -89,8 +89,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             echo "📋 Latest reports:"
-            ls -lt /app/project1/reports/*.json 2>/dev/null | head -3 || echo "No JSON reports"
-            ls -lt /app/project1/reports/*.html 2>/dev/null | head -3 || echo "No HTML reports"
+            ls -lt /app/infra/reports/*.json 2>/dev/null | head -3 || echo "No JSON reports"
+            ls -lt /app/infra/reports/*.html 2>/dev/null | head -3 || echo "No HTML reports"
 
   # ============================================
   # Summary

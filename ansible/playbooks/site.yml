@@ -1,12 +1,12 @@
 ---
 # site.yml - 인프라 상태 점검 & 리포트 생성
-# 실행: cd /app/project1/ansible && ansible-playbook playbooks/site.yml
+# 실행: cd /app/infra/ansible && ansible-playbook playbooks/site.yml
 
 - name: Infrastructure Health Check & Report
   hosts: all
   gather_facts: yes
   vars:
-    report_dir: /app/project1/reports
+    report_dir: /app/infra/reports
     timestamp: "{{ ansible_date_time.iso8601_basic_short }}"
     
   tasks:

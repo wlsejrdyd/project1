@@ -1,7 +1,7 @@
 # .github/workflows/ci.yml
 # 코드 품질 체크 + 문법 검사
 
-name: CI
+name: Infra Monitoring Project CI
 
 on:
   push:

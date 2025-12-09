@@ -6,9 +6,9 @@
 
 ## 🌐 Live Demo
 
-- **Dashboard**: https://project1.deok.kr
-- **Prometheus**: https://project1.deok.kr/prometheus
-- **Grafana**: https://project1.deok.kr/grafana
+- **Dashboard**: https://infra.deok.kr
+- **Prometheus**: https://infra.deok.kr/prometheus
+- **Grafana**: https://infra.deok.kr/grafana
 
 ---
 

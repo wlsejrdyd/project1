@@ -1,7 +1,7 @@
 # .github/workflows/cd.yml
 # main 브랜치 푸시 시 서버 자동 배포
 
-name: CD
+name: Infra Monitoring Project CD
 
 on:
   push:
@@ -27,7 +27,7 @@ jobs:
           script: |
             echo "🚀 Starting deployment..."
             
-            cd /app/project1
+            cd /app/infra
             
             echo "📥 Pulling latest code..."
             git pull origin main
