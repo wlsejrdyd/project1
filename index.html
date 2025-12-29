@@ -76,6 +76,62 @@
     .ext-link.grafana { background: rgba(244, 104, 0, 0.15); border: 1px solid var(--grafana); color: var(--grafana); }
     .ext-link:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 
+    /* Server Selector */
+    .server-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .server-selector-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .server-select {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 6px 28px 6px 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      min-width: 150px;
+    }
+
+    .server-select:hover {
+      border-color: var(--accent);
+    }
+
+    .server-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    .server-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse 2s infinite;
+    }
+
+    .server-indicator.offline {
+      background: var(--danger);
+    }
+
     .status-badge {
       display: flex; align-items: center; gap: 8px;
       padding: 8px 16px;
@@ -130,6 +186,16 @@
 
     .metric-value { font-size: 2.2rem; font-weight: 700; margin-bottom: 0.25rem; }
     .metric-sub { font-size: 0.8rem; color: var(--text-muted); }
+
+    .server-name-badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      color: var(--accent);
+      margin-left: 6px;
+    }
 
     .progress-bar { height: 6px; background: var(--bg-secondary); border-radius: 3px; margin-top: 1rem; overflow: hidden; }
     .progress-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
@@ -252,6 +318,8 @@
       .grid-4 { grid-template-columns: repeat(2, 1fr); }
       .grid-2, .grid-3, .grid-3-1 { grid-template-columns: 1fr; }
       .service-grid { grid-template-columns: 1fr; }
+      .header { flex-wrap: wrap; gap: 1rem; }
+      .server-selector { order: -1; width: 100%; justify-content: center; }
     }
   </style>
 </head>
@@ -262,6 +330,14 @@
       <span class="logo-text">Infrastructure Dashboard</span>
     </div>
     <div class="header-right">
+      <!-- Server Selector -->
+      <div class="server-selector">
+        <span class="server-selector-label">Server</span>
+        <div class="server-indicator" id="serverIndicator"></div>
+        <select class="server-select" id="serverSelect">
+          <!-- 서버 목록이 동적으로 추가됨 -->
+        </select>
+      </div>
       <div class="external-links">
         <a href="/prometheus" target="_blank" class="ext-link prometheus">🔥 Prometheus</a>
         <a href="/grafana" target="_blank" class="ext-link grafana">📈 Grafana</a>
@@ -279,7 +355,7 @@
     <div class="grid-4">
       <div class="card">
         <div class="card-header">
-          <span class="card-title">CPU Usage</span>
+          <span class="card-title">CPU Usage <span class="server-name-badge" id="cpuServerBadge"></span></span>
           <div class="card-icon" style="background: rgba(59, 130, 246, 0.2); color: var(--accent);">💻</div>
         </div>
         <div class="metric-value" id="cpuValue">--</div>
@@ -291,7 +367,7 @@
 
       <div class="card">
         <div class="card-header">
-          <span class="card-title">Memory Usage</span>
+          <span class="card-title">Memory Usage <span class="server-name-badge" id="memServerBadge"></span></span>
           <div class="card-icon" style="background: rgba(16, 185, 129, 0.2); color: var(--success);">🧠</div>
         </div>
         <div class="metric-value" id="memValue">--</div>
@@ -303,7 +379,7 @@
 
       <div class="card">
         <div class="card-header">
-          <span class="card-title">Disk Usage</span>
+          <span class="card-title">Disk Usage <span class="server-name-badge" id="diskServerBadge"></span></span>
           <div class="card-icon" style="background: rgba(245, 158, 11, 0.2); color: var(--warning);">💾</div>
         </div>
         <div class="metric-value" id="diskValue">--</div>
@@ -315,7 +391,7 @@
 
       <div class="card">
         <div class="card-header">
-          <span class="card-title">Uptime</span>
+          <span class="card-title">Uptime <span class="server-name-badge" id="uptimeServerBadge"></span></span>
           <div class="card-icon" style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6;">⏱️</div>
         </div>
         <div class="metric-value" id="uptimeValue">--</div>
@@ -335,7 +411,7 @@
 
       <div class="card">
         <div class="card-header">
-          <span class="card-title">CPU Usage (1h)</span>
+          <span class="card-title">CPU Usage (1h) <span class="server-name-badge" id="chartServerBadge"></span></span>
         </div>
         <div class="chart-container">
           <canvas id="cpuChart"></canvas>
@@ -526,11 +602,34 @@
         { repo: 'salm', label: 'SALM', color: '#ec4899', icon: '🏠' },
         { repo: 'mgmt', label: 'Mgmt', color: '#8b5cf6', icon: '⚙️' }
       ],
-      refreshInterval: 10000
+      refreshInterval: 10000,
+      // 서버 목록 - 여기에 서버 추가하면 됨
+      servers: [
+        { 
+          id: 'jindeokyong-Virtual-Machine(Main-Rocky)', 
+          name: '🖥️ jindeokyong-Virtual-Machine(Main-Rocky)', 
+          instance: 'localhost:9100',  // node_exporter 주소
+          description: 'jindeokyong-Virtual-Machine(Main-Rocky)'
+        },
+        // 새 서버 추가 예시:
+        // { 
+        //   id: 'ubuntu-server', 
+        //   name: '🐧 Ubuntu Server', 
+        //   instance: '192.168.0.XXX:9100',
+        //   description: 'Ubuntu Server'
+        // },
+        { 
+          id: 'jindeokyong-Virtual-Machine(Ubuntu)', 
+          name: '🖥️ jindeokyong-Virtual-Machine(Ubuntu)', 
+          instance: 'localhost:9100',  // node_exporter 주소
+          description: 'jindeokyong-Virtual-Machine(Ubuntu)'
+        },
+      ]
     };
 
     let allWorkflowRuns = [];
     let currentRepoFilter = 'all';
+    let currentServer = CONFIG.servers[0]; // 기본 선택 서버
 
     const SERVICES = [
       { name: 'Nginx', port: 80, icon: '🌐', color: 'var(--success)', job: null },
@@ -540,6 +639,48 @@
       { name: 'MariaDB', port: 9981, icon: '🗄️', color: 'var(--accent)', job: null },
       { name: 'Kube State Metrics', port: 30047, icon: '☸️', color: 'var(--kubernetes)', job: 'kube-state-metrics' },
     ];
+
+    // 서버 선택 드롭다운 초기화
+    function initServerSelector() {
+      const select = document.getElementById('serverSelect');
+      select.innerHTML = CONFIG.servers.map(server => 
+        `<option value="${server.id}" title="${server.description}">${server.name}</option>`
+      ).join('');
+      
+      // 저장된 서버 선택 복원 (localStorage)
+      const savedServer = localStorage.getItem('selectedServer');
+      if (savedServer) {
+        const found = CONFIG.servers.find(s => s.id === savedServer);
+        if (found) {
+          currentServer = found;
+          select.value = savedServer;
+        }
+      }
+      
+      // 서버 변경 이벤트
+      select.addEventListener('change', (e) => {
+        const selected = CONFIG.servers.find(s => s.id === e.target.value);
+        if (selected) {
+          currentServer = selected;
+          localStorage.setItem('selectedServer', selected.id);
+          // 모든 메트릭 즉시 갱신
+          updateMetrics();
+          updateServerBadges();
+          resetCpuChart();
+        }
+      });
+      
+      updateServerBadges();
+    }
+
+    // 서버 이름 배지 업데이트
+    function updateServerBadges() {
+      const badges = ['cpuServerBadge', 'memServerBadge', 'diskServerBadge', 'uptimeServerBadge', 'chartServerBadge'];
+      badges.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = currentServer.name.replace(/^[^\s]+\s/, ''); // 이모지 제거
+      });
+    }
 
     function updateTime() {
       const now = new Date();
@@ -551,9 +692,24 @@
     setInterval(updateTime, 1000);
     updateTime();
 
-    async function fetchPrometheusMetric(query) {
+    // instance 필터 추가된 Prometheus 쿼리
+    async function fetchPrometheusMetric(query, useInstanceFilter = true) {
       try {
-        const res = await fetch(`${CONFIG.prometheusUrl}/api/v1/query?query=${encodeURIComponent(query)}`);
+        let finalQuery = query;
+        
+        // instance 필터 적용 (node_ 메트릭에만)
+        if (useInstanceFilter && query.includes('node_')) {
+          const instance = currentServer.instance;
+          // 이미 {} 가 있는 경우
+          if (query.includes('{')) {
+            finalQuery = query.replace('{', `{instance="${instance}",`);
+          } else {
+            // {} 가 없는 경우 (예: node_memory_MemTotal_bytes)
+            finalQuery = query.replace(/(node_[a-z_]+)/i, `$1{instance="${instance}"}`);
+          }
+        }
+        
+        const res = await fetch(`${CONFIG.prometheusUrl}/api/v1/query?query=${encodeURIComponent(finalQuery)}`);
         const data = await res.json();
         if (data.status === 'success' && data.data.result.length > 0) {
           return parseFloat(data.data.result[0].value[1]);
@@ -563,31 +719,64 @@
     }
 
     async function updateMetrics() {
-      const cpu = await fetchPrometheusMetric('100 - (avg(irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)');
+      const instance = currentServer.instance;
+      
+      // CPU - instance 필터 적용
+      const cpuQuery = `100 - (avg(irate(node_cpu_seconds_total{instance="${instance}",mode="idle"}[5m])) * 100)`;
+      const cpu = await fetchPrometheusMetric(cpuQuery, false);
       if (cpu !== null) {
         document.getElementById('cpuValue').textContent = cpu.toFixed(1) + '%';
         document.getElementById('cpuBar').style.width = cpu + '%';
+        updateServerIndicator(true);
+      } else {
+        document.getElementById('cpuValue').textContent = '--';
+        document.getElementById('cpuBar').style.width = '0%';
+        updateServerIndicator(false);
       }
+      
+      // Memory
       const memTotal = await fetchPrometheusMetric('node_memory_MemTotal_bytes');
       const memAvail = await fetchPrometheusMetric('node_memory_MemAvailable_bytes');
       if (memTotal && memAvail) {
         const memUsed = ((memTotal - memAvail) / memTotal * 100);
         document.getElementById('memValue').textContent = memUsed.toFixed(1) + '%';
         document.getElementById('memBar').style.width = memUsed + '%';
+      } else {
+        document.getElementById('memValue').textContent = '--';
+        document.getElementById('memBar').style.width = '0%';
       }
+      
+      // Disk
       const diskTotal = await fetchPrometheusMetric('node_filesystem_size_bytes{mountpoint="/"}');
       const diskAvail = await fetchPrometheusMetric('node_filesystem_avail_bytes{mountpoint="/"}');
       if (diskTotal && diskAvail) {
         const diskUsed = ((diskTotal - diskAvail) / diskTotal * 100);
         document.getElementById('diskValue').textContent = diskUsed.toFixed(1) + '%';
         document.getElementById('diskBar').style.width = diskUsed + '%';
+      } else {
+        document.getElementById('diskValue').textContent = '--';
+        document.getElementById('diskBar').style.width = '0%';
       }
+      
+      // Uptime
       const bootTime = await fetchPrometheusMetric('node_boot_time_seconds');
       if (bootTime) {
         const uptimeSec = Date.now() / 1000 - bootTime;
         const days = Math.floor(uptimeSec / 86400);
         const hours = Math.floor((uptimeSec % 86400) / 3600);
         document.getElementById('uptimeValue').textContent = `${days}d ${hours}h`;
+      } else {
+        document.getElementById('uptimeValue').textContent = '--';
+      }
+    }
+
+    // 서버 상태 인디케이터 업데이트
+    function updateServerIndicator(isOnline) {
+      const indicator = document.getElementById('serverIndicator');
+      if (isOnline) {
+        indicator.classList.remove('offline');
+      } else {
+        indicator.classList.add('offline');
       }
     }
 
@@ -753,20 +942,36 @@
       return `${Math.floor(hours / 24)}일 전`;
     }
 
+    // CPU 차트
     const ctx = document.getElementById('cpuChart').getContext('2d');
-    const cpuHistory = Array(12).fill(0);
+    let cpuHistory = Array(12).fill(0);
     const labels = Array.from({length: 12}, (_, i) => `-${(11-i)*5}m`);
     const cpuChart = new Chart(ctx, {
       type: 'line',
       data: { labels, datasets: [{ label: 'CPU %', data: cpuHistory, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2 }] },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#1f2937' }, ticks: { color: '#9ca3af', font: { size: 10 } } }, y: { min: 0, max: 100, grid: { color: '#1f2937' }, ticks: { color: '#9ca3af', font: { size: 10 } } } } }
     });
+
+    // 서버 변경 시 차트 리셋
+    function resetCpuChart() {
+      cpuHistory = Array(12).fill(0);
+      cpuChart.data.datasets[0].data = cpuHistory;
+      cpuChart.update('none');
+    }
+
     async function updateCpuChart() {
-      const cpu = await fetchPrometheusMetric('100 - (avg(irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)');
-      if (cpu !== null) { cpuHistory.shift(); cpuHistory.push(cpu); cpuChart.update('none'); }
+      const instance = currentServer.instance;
+      const cpuQuery = `100 - (avg(irate(node_cpu_seconds_total{instance="${instance}",mode="idle"}[5m])) * 100)`;
+      const cpu = await fetchPrometheusMetric(cpuQuery, false);
+      if (cpu !== null) { 
+        cpuHistory.shift(); 
+        cpuHistory.push(cpu); 
+        cpuChart.update('none'); 
+      }
     }
 
     async function init() {
+      initServerSelector();
       await updateMetrics();
       await updateServiceStatus();
       await updateKubernetes();
